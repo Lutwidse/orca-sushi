@@ -52,12 +52,13 @@ class OrcaSushi:
                 collateral_token = wasm[10]["value"]
                 strategy_activate_ltv = wasm[12]["value"]
                 strategy_activate_amount = wasm[13]["value"]
+
                 if collateral_token == "terra1kc87mu460fwkqte29rquh4hc20m54fxwtsx7gp":
+                    amount = amount[:-6] if len(amount) > 6 else amount[:-5]
                     writer.writerow({
                         "timestamp": timestamp,
-                        "amount": amount[:-6],
+                        "amount": amount,
                         "premium_slot": int(premium_slot)/100,
                         "strategy_activate_ltv": int(strategy_activate_ltv)/100,
-                        # Some people still bidding at the 2.5m thresholding. which is 11 digits zero.
-                        "strategy_activate_amount": strategy_activate_amount.replace("0", "")+"0"*6
+                        "strategy_activate_amount": strategy_activate_amount[:-6]
                         })
