@@ -1,5 +1,7 @@
 import requests
 from datetime import datetime
+from zoneinfo import ZoneInfo   
+LOCAL_TIMEZONE = datetime.utcnow().astimezone().tzinfo
 
 API = "https://fcd.terra.dev/v1/txs?limit=100&account="
 KUJIRA_ORCA_AUST_VAULT = "terra13nk2cjepdzzwfqy740pxzpe3x75pd6g0grxm2z"
@@ -35,14 +37,17 @@ with open("whale.txt", "r") as f:
 
             collateral_token = wasm[10]["value"]
             if collateral_token == BLUNA:
-                timestamp = i["timestamp"].replace("-", "/").replace("T", " ").strip("Z")
+                timestamp = i["timestamp"]
+                utc_timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=ZoneInfo("US/Central"))
+                local_timestamp = utc_timestamp.astimezone(LOCAL_TIMEZONE)
+
                 amount = wasm[8]["value"]
                 premium_slot = wasm[9]["value"]
                 strategy_activate_ltv = wasm[12]["value"]
                 strategy_activate_amount = wasm[13]["value"]
                 amount = amount[:-6] if len(amount) > 6 else amount[:-5]
-                bids.append([timestamp, f"[{w[6:14]}] - [Amount] {'{:.2f}'.format((int(amount)/100000))}M - [Premium] {premium_slot}% - [Borrow Limit Threshold] {strategy_activate_ltv}% - [At-Risk Collateral Threshold] {int(strategy_activate_amount)/1000000000000}M"])
+                bids.append([local_timestamp.isoformat(" "), f"[{w[6:14]}] - [Amount] {'{:.2f}'.format((int(amount)/100000))}M - [Premium] {premium_slot}% - [Borrow Limit Threshold] {strategy_activate_ltv}% - [At-Risk Collateral Threshold] {int(strategy_activate_amount)/1000000000000}M"])
 
-sorted_bids = sorted(bids, key=lambda t: datetime.strptime(t[0], '%Y/%m/%d %H:%M:%S'), reverse=True)
+sorted_bids = sorted(bids, key=lambda t: datetime.strptime(t[0], "%Y-%m-%d %H:%M:%S%z"), reverse=True)
 for i, j in sorted_bids:
     print(i, j)
